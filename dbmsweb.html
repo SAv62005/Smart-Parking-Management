@@ -1,0 +1,1489 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Smart Parking Management System</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #080c14;
+  --surface: #0d1422;
+  --surface2: #111827;
+  --accent: #00e5ff;
+  --accent2: #ff6b35;
+  --accent3: #7fff6b;
+  --text: #e8f0fe;
+  --muted: #6b7a99;
+  --border: rgba(0,229,255,0.15);
+  --glow: 0 0 30px rgba(0,229,255,0.3);
+}
+
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  overflow-x: hidden;
+}
+
+/* ── GRID NOISE BACKGROUND ── */
+body::before {
+  content:'';
+  position:fixed; inset:0;
+  background-image:
+    linear-gradient(rgba(0,229,255,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,229,255,0.03) 1px, transparent 1px);
+  background-size: 60px 60px;
+  pointer-events:none; z-index:0;
+}
+
+/* ── NAV ── */
+nav {
+  position:fixed; top:0; left:0; right:0; z-index:100;
+  display:flex; align-items:center; justify-content:space-between;
+  padding:1rem 3rem;
+  background:rgba(8,12,20,0.85);
+  backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--border);
+}
+.nav-logo {
+  font-family:'Bebas Neue'; font-size:1.4rem; letter-spacing:3px;
+  color:var(--accent);
+}
+.nav-links { display:flex; gap:2rem; }
+.nav-links a {
+  color:var(--muted); text-decoration:none; font-size:.85rem; font-weight:500;
+  letter-spacing:.05em; transition:color .3s;
+}
+.nav-links a:hover { color:var(--accent); }
+.nav-badge {
+  background:rgba(0,229,255,0.1); border:1px solid var(--border);
+  color:var(--accent); padding:.3rem .8rem; border-radius:20px;
+  font-family:'JetBrains Mono'; font-size:.7rem;
+}
+
+/* ── HERO ── */
+#hero {
+  min-height:100vh; display:flex; align-items:center;
+  padding:6rem 3rem 3rem;
+  position:relative; overflow:hidden;
+}
+.hero-bg {
+  position:absolute; inset:0;
+  background:
+    radial-gradient(ellipse 80% 60% at 60% 50%, rgba(0,229,255,0.07) 0%, transparent 70%),
+    radial-gradient(ellipse 40% 40% at 20% 80%, rgba(255,107,53,0.06) 0%, transparent 60%);
+}
+.hero-content { position:relative; z-index:1; max-width:700px; }
+.hero-tag {
+  display:inline-flex; align-items:center; gap:.5rem;
+  background:rgba(0,229,255,0.08); border:1px solid var(--border);
+  padding:.4rem 1rem; border-radius:30px;
+  font-family:'JetBrains Mono'; font-size:.72rem; color:var(--accent);
+  margin-bottom:2rem; animation:fadeUp .8s ease both;
+}
+.hero-tag::before { content:'●'; animation:pulse 2s infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+h1 {
+  font-family:'Bebas Neue'; font-size:clamp(3.5rem,8vw,7rem); line-height:.95;
+  letter-spacing:2px;
+  animation:fadeUp .8s .15s ease both;
+}
+h1 span { color:var(--accent); }
+.hero-sub {
+  margin-top:1.5rem; color:var(--muted); font-size:1.05rem; line-height:1.7;
+  max-width:520px; animation:fadeUp .8s .3s ease both;
+}
+.hero-meta {
+  margin-top:2rem; display:flex; gap:1.5rem; flex-wrap:wrap;
+  animation:fadeUp .8s .45s ease both;
+}
+.meta-chip {
+  display:flex; align-items:center; gap:.5rem;
+  font-family:'JetBrains Mono'; font-size:.75rem; color:var(--muted);
+}
+.meta-chip span { color:var(--text); }
+.hero-btns {
+  margin-top:2.5rem; display:flex; gap:1rem; flex-wrap:wrap;
+  animation:fadeUp .8s .6s ease both;
+}
+.btn-primary {
+  background:var(--accent); color:#000; font-weight:700;
+  padding:.8rem 2rem; border:none; border-radius:6px; cursor:pointer;
+  font-family:'DM Sans'; font-size:.9rem; letter-spacing:.05em;
+  transition:all .3s; text-decoration:none; display:inline-block;
+}
+.btn-primary:hover { box-shadow:0 0 30px rgba(0,229,255,0.5); transform:translateY(-2px); }
+.btn-outline {
+  background:transparent; color:var(--text); font-weight:500;
+  padding:.8rem 2rem; border:1px solid var(--border); border-radius:6px; cursor:pointer;
+  font-family:'DM Sans'; font-size:.9rem; transition:all .3s;
+  text-decoration:none; display:inline-block;
+}
+.btn-outline:hover { border-color:var(--accent); color:var(--accent); }
+
+/* floating lot visual */
+.hero-visual {
+  position:absolute; right:-2rem; top:50%; transform:translateY(-50%);
+  width:420px; opacity:.7;
+  animation:fadeIn 1.2s .5s ease both;
+}
+@media(max-width:900px){ .hero-visual{display:none} }
+
+/* ── LIVE STATS ── */
+.stats-bar {
+  background:var(--surface); border-top:1px solid var(--border);
+  border-bottom:1px solid var(--border);
+  display:flex; gap:0; overflow:hidden; position:relative; z-index:1;
+}
+.stat-item {
+  flex:1; padding:1.5rem 2rem;
+  border-right:1px solid var(--border);
+  position:relative; overflow:hidden;
+  transition:background .3s; cursor:default;
+}
+.stat-item:last-child { border-right:none; }
+.stat-item:hover { background:rgba(0,229,255,0.04); }
+.stat-label { font-size:.72rem; color:var(--muted); letter-spacing:.1em; text-transform:uppercase; font-family:'JetBrains Mono'; }
+.stat-value { font-family:'Bebas Neue'; font-size:2.8rem; color:var(--accent); line-height:1; margin-top:.2rem; }
+.stat-value.orange { color:var(--accent2); }
+.stat-value.green { color:var(--accent3); }
+.stat-sub { font-size:.72rem; color:var(--muted); margin-top:.2rem; }
+.stat-bar-fill {
+  position:absolute; bottom:0; left:0; height:3px;
+  background:var(--accent); transition:width 2s ease;
+}
+
+/* ── SECTIONS ── */
+section { padding:6rem 3rem; position:relative; z-index:1; }
+.section-label {
+  font-family:'JetBrains Mono'; font-size:.72rem; color:var(--accent);
+  letter-spacing:.2em; text-transform:uppercase; margin-bottom:1rem;
+  display:flex; align-items:center; gap:.8rem;
+}
+.section-label::before { content:''; width:30px; height:1px; background:var(--accent); }
+h2 {
+  font-family:'Bebas Neue'; font-size:clamp(2.5rem,5vw,4rem);
+  line-height:1; letter-spacing:1px; margin-bottom:1rem;
+}
+h2 em { color:var(--accent); font-style:normal; }
+
+/* ── PROBLEM SECTION ── */
+#problem { background:var(--surface); }
+.problem-grid {
+  display:grid; grid-template-columns:1fr 1fr;
+  gap:3rem; margin-top:3rem; align-items:center;
+}
+@media(max-width:768px){ .problem-grid{grid-template-columns:1fr} }
+.problem-text p { color:var(--muted); line-height:1.8; font-size:1rem; margin-bottom:1rem; }
+.pain-points { display:flex; flex-direction:column; gap:1rem; margin-top:2rem; }
+.pain-point {
+  display:flex; align-items:flex-start; gap:1rem;
+  background:rgba(255,107,53,0.06); border:1px solid rgba(255,107,53,0.2);
+  border-left:3px solid var(--accent2);
+  padding:1rem 1.2rem; border-radius:0 8px 8px 0;
+  transition:transform .3s;
+}
+.pain-point:hover { transform:translateX(6px); }
+.pain-icon { font-size:1.3rem; flex-shrink:0; margin-top:.1rem; }
+.pain-title { font-weight:600; font-size:.9rem; margin-bottom:.2rem; color:var(--text); }
+.pain-desc { font-size:.82rem; color:var(--muted); line-height:1.5; }
+.city-visual {
+  background:var(--bg); border:1px solid var(--border); border-radius:16px;
+  padding:2rem; display:flex; flex-direction:column; gap:1rem;
+}
+.parking-meter {
+  display:flex; align-items:center; justify-content:space-between;
+  background:rgba(0,0,0,0.3); padding:1rem 1.5rem; border-radius:10px;
+  border:1px solid var(--border);
+}
+.meter-label { font-family:'JetBrains Mono'; font-size:.78rem; color:var(--muted); }
+.meter-value { font-family:'Bebas Neue'; font-size:1.8rem; }
+.meter-value.red { color:#ff4444; }
+.meter-value.yellow { color:#ffbb33; }
+.meter-value.green-v { color:var(--accent3); }
+.progress-wrap { flex:1; margin:0 1rem; background:rgba(255,255,255,0.1); border-radius:4px; height:6px; overflow:hidden; }
+.progress-fill { height:100%; border-radius:4px; transition:width 2s ease; }
+
+/* ── OBJECTIVES ── */
+#objectives { }
+.objectives-grid {
+  display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr));
+  gap:1.5rem; margin-top:3rem;
+}
+.obj-card {
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:12px; padding:1.8rem;
+  position:relative; overflow:hidden;
+  transition:all .3s; cursor:default;
+}
+.obj-card::before {
+  content:''; position:absolute; top:0; left:0; right:0; height:2px;
+  background:linear-gradient(90deg, var(--accent), transparent);
+  transform:scaleX(0); transform-origin:left; transition:transform .4s;
+}
+.obj-card:hover { border-color:rgba(0,229,255,0.3); transform:translateY(-4px); box-shadow:var(--glow); }
+.obj-card:hover::before { transform:scaleX(1); }
+.obj-num {
+  font-family:'Bebas Neue'; font-size:3rem; color:rgba(0,229,255,0.1);
+  line-height:1; margin-bottom:.5rem;
+}
+.obj-title { font-weight:600; font-size:.95rem; margin-bottom:.5rem; color:var(--text); }
+.obj-desc { font-size:.82rem; color:var(--muted); line-height:1.6; }
+.obj-icon { font-size:1.5rem; margin-bottom:.8rem; }
+
+/* ── ERD SECTION ── */
+#erd { background:var(--surface); }
+.erd-container { margin-top:3rem; }
+.erd-canvas {
+  background:var(--bg); border:1px solid var(--border); border-radius:16px;
+  padding:2rem; overflow-x:auto; margin-bottom:2rem;
+}
+.erd-svg-wrapper { min-width:700px; }
+.entity-cards-grid {
+  display:grid; grid-template-columns:repeat(auto-fill,minmax(250px,1fr));
+  gap:1rem; margin-top:2rem;
+}
+.entity-card {
+  background:var(--bg); border:1px solid var(--border); border-radius:10px;
+  padding:1.2rem; transition:all .3s;
+}
+.entity-card:hover { border-color:var(--accent); box-shadow:0 0 20px rgba(0,229,255,0.15); }
+.entity-name {
+  font-family:'JetBrains Mono'; font-size:.8rem; color:var(--accent);
+  margin-bottom:.8rem; display:flex; align-items:center; gap:.5rem;
+}
+.entity-name::before { content:'◆'; font-size:.5rem; }
+.entity-attrs { display:flex; flex-direction:column; gap:.35rem; }
+.attr { font-size:.75rem; color:var(--muted); display:flex; align-items:center; gap:.5rem; }
+.attr.pk { color:var(--accent2); }
+.attr.fk { color:var(--accent3); }
+.attr-badge {
+  font-family:'JetBrains Mono'; font-size:.6rem; padding:.1rem .35rem;
+  border-radius:3px; flex-shrink:0;
+}
+.badge-pk { background:rgba(255,107,53,0.15); color:var(--accent2); }
+.badge-fk { background:rgba(127,255,107,0.1); color:var(--accent3); }
+
+/* ── RELATIONSHIPS ── */
+.rel-grid {
+  display:flex; flex-direction:column; gap:.8rem; margin-top:2rem;
+}
+.rel-item {
+  display:flex; align-items:center; gap:1rem;
+  background:var(--surface2); border:1px solid var(--border);
+  padding:.8rem 1.2rem; border-radius:8px;
+  font-family:'JetBrains Mono'; font-size:.78rem;
+}
+.rel-from { color:var(--accent); }
+.rel-to { color:var(--accent3); }
+.rel-type {
+  background:rgba(0,229,255,0.1); color:var(--accent);
+  padding:.2rem .6rem; border-radius:4px; font-size:.65rem;
+}
+.rel-arrow { color:var(--muted); font-size:1rem; }
+
+/* ── SCHEMA / NORMALIZATION ── */
+#schema { }
+.schema-layout { display:grid; grid-template-columns:1fr 1fr; gap:3rem; margin-top:3rem; }
+@media(max-width:768px){ .schema-layout{grid-template-columns:1fr} }
+.norm-steps { display:flex; flex-direction:column; gap:1rem; }
+.norm-step {
+  display:flex; align-items:flex-start; gap:1.2rem;
+  background:var(--surface); border:1px solid var(--border);
+  padding:1.2rem 1.5rem; border-radius:10px;
+  transition:all .3s;
+}
+.norm-step:hover { border-color:var(--accent); transform:translateX(6px); }
+.norm-badge {
+  background:var(--accent); color:#000; font-family:'Bebas Neue';
+  font-size:1.1rem; padding:.3rem .8rem; border-radius:6px; flex-shrink:0;
+  line-height:1;
+}
+.norm-title { font-weight:600; font-size:.9rem; margin-bottom:.3rem; }
+.norm-desc { font-size:.8rem; color:var(--muted); line-height:1.5; }
+
+.constraints-list { display:flex; flex-direction:column; gap:.8rem; }
+.constraint-item {
+  display:flex; align-items:center; gap:1rem;
+  background:var(--surface); border:1px solid var(--border);
+  padding:1rem 1.2rem; border-radius:8px;
+  font-size:.85rem;
+}
+.constraint-type {
+  font-family:'JetBrains Mono'; font-size:.7rem; color:var(--accent2);
+  background:rgba(255,107,53,0.1); padding:.2rem .5rem; border-radius:4px;
+  flex-shrink:0; min-width:80px; text-align:center;
+}
+.constraint-desc { color:var(--muted); font-size:.8rem; }
+
+/* ── SLOT TYPES ── */
+#slots { background:var(--surface); }
+.slot-types {
+  display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr));
+  gap:1.5rem; margin-top:3rem;
+}
+.slot-card {
+  border-radius:14px; padding:2rem 1.5rem;
+  border:1px solid; text-align:center;
+  transition:all .4s; cursor:default; position:relative; overflow:hidden;
+}
+.slot-card::after {
+  content:''; position:absolute; inset:0;
+  background:currentColor; opacity:0; transition:opacity .3s;
+}
+.slot-card:hover { transform:translateY(-6px); }
+.slot-card:hover::after { opacity:.04; }
+.slot-card.regular { border-color:rgba(0,229,255,0.3); color:var(--accent); }
+.slot-card.vip { border-color:rgba(255,215,0,0.4); color:#ffd700; }
+.slot-card.ev { border-color:rgba(127,255,107,0.4); color:var(--accent3); }
+.slot-card.disabled { border-color:rgba(180,100,255,0.4); color:#b464ff; }
+.slot-icon { font-size:2.5rem; margin-bottom:1rem; }
+.slot-name { font-family:'Bebas Neue'; font-size:1.4rem; letter-spacing:1px; margin-bottom:.5rem; color:var(--text); }
+.slot-rate { font-family:'JetBrains Mono'; font-size:.8rem; margin-bottom:1rem; }
+.slot-desc { font-size:.78rem; color:var(--muted); line-height:1.5; }
+
+/* ── ROLES ── */
+#roles { }
+.roles-grid {
+  display:grid; grid-template-columns:repeat(3,1fr); gap:2rem; margin-top:3rem;
+}
+@media(max-width:700px){ .roles-grid{grid-template-columns:1fr} }
+.role-card {
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:14px; padding:2rem; position:relative; overflow:hidden;
+}
+.role-card::before {
+  content:''; position:absolute; top:-60px; right:-60px;
+  width:150px; height:150px; border-radius:50%;
+  opacity:.06;
+}
+.role-card.admin::before { background:#ff4444; }
+.role-card.staff::before { background:var(--accent); }
+.role-card.driver::before { background:var(--accent3); }
+.role-label {
+  font-family:'Bebas Neue'; font-size:1.5rem; letter-spacing:1px; margin-bottom:1rem;
+  display:flex; align-items:center; gap:.8rem;
+}
+.role-card.admin .role-label { color:#ff6b6b; }
+.role-card.staff .role-label { color:var(--accent); }
+.role-card.driver .role-label { color:var(--accent3); }
+.role-perms { display:flex; flex-direction:column; gap:.6rem; }
+.perm {
+  display:flex; align-items:center; gap:.6rem;
+  font-size:.8rem; color:var(--muted);
+}
+.perm::before { content:'✓'; font-size:.7rem; color:currentColor; flex-shrink:0; }
+.role-card.admin .perm::before { color:#ff6b6b; }
+.role-card.staff .perm::before { color:var(--accent); }
+.role-card.driver .perm::before { color:var(--accent3); }
+
+/* ── REPORTS ── */
+#reports { background:var(--surface); }
+.reports-grid {
+  display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr));
+  gap:1.5rem; margin-top:3rem;
+}
+.report-card {
+  background:var(--bg); border:1px solid var(--border);
+  border-radius:12px; padding:1.5rem;
+  transition:all .3s;
+}
+.report-card:hover { border-color:rgba(0,229,255,0.3); box-shadow:0 8px 30px rgba(0,0,0,.4); }
+.report-icon { font-size:2rem; margin-bottom:1rem; }
+.report-title { font-weight:600; font-size:.9rem; margin-bottom:.5rem; }
+.report-desc { font-size:.78rem; color:var(--muted); line-height:1.5; margin-bottom:1rem; }
+.report-tag {
+  font-family:'JetBrains Mono'; font-size:.65rem;
+  background:rgba(0,229,255,0.08); color:var(--accent);
+  border:1px solid var(--border); padding:.2rem .6rem; border-radius:4px;
+}
+
+/* ── LIVE DEMO ── */
+#demo { }
+.demo-wrapper {
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:16px; overflow:hidden; margin-top:3rem;
+}
+.demo-tabs {
+  display:flex; border-bottom:1px solid var(--border);
+  background:var(--bg);
+}
+.demo-tab {
+  padding:1rem 1.8rem; font-family:'JetBrains Mono'; font-size:.8rem;
+  color:var(--muted); cursor:pointer; border:none; background:transparent;
+  border-bottom:2px solid transparent; transition:all .3s;
+}
+.demo-tab.active { color:var(--accent); border-bottom-color:var(--accent); }
+.demo-tab:hover:not(.active) { color:var(--text); }
+.demo-content { padding:2rem; display:none; }
+.demo-content.active { display:block; }
+
+/* parking lot grid */
+.lot-grid-wrap { display:grid; grid-template-columns:1fr 1fr; gap:2rem; }
+@media(max-width:600px){.lot-grid-wrap{grid-template-columns:1fr}}
+.floor-section { margin-bottom:1.5rem; }
+.floor-label { font-family:'JetBrains Mono'; font-size:.72rem; color:var(--muted); margin-bottom:.8rem; letter-spacing:.1em; }
+.slot-row { display:flex; flex-wrap:wrap; gap:.5rem; }
+.slot-box {
+  width:42px; height:38px; border-radius:5px; border:1px solid;
+  display:flex; align-items:center; justify-content:center;
+  font-family:'JetBrains Mono'; font-size:.6rem; cursor:pointer;
+  transition:all .2s; position:relative;
+}
+.slot-box.available { border-color:var(--accent3); color:var(--accent3); background:rgba(127,255,107,0.05); }
+.slot-box.occupied { border-color:#ff4444; color:#ff4444; background:rgba(255,68,68,0.08); }
+.slot-box.reserved { border-color:#ffd700; color:#ffd700; background:rgba(255,215,0,0.06); }
+.slot-box:hover { transform:scale(1.1); z-index:2; }
+.legend { display:flex; gap:1.5rem; margin-top:1rem; flex-wrap:wrap; }
+.legend-item { display:flex; align-items:center; gap:.4rem; font-size:.75rem; color:var(--muted); }
+.legend-dot { width:10px; height:10px; border-radius:2px; }
+
+/* reservation form */
+.res-form { display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; }
+@media(max-width:600px){.res-form{grid-template-columns:1fr}}
+.form-group { display:flex; flex-direction:column; gap:.4rem; }
+.form-group label { font-size:.78rem; color:var(--muted); letter-spacing:.05em; font-family:'JetBrains Mono'; }
+.form-group input, .form-group select {
+  background:var(--bg); border:1px solid var(--border); color:var(--text);
+  padding:.7rem 1rem; border-radius:8px; font-family:'DM Sans'; font-size:.88rem;
+  outline:none; transition:border .3s;
+}
+.form-group input:focus, .form-group select:focus { border-color:var(--accent); }
+.form-group select option { background:var(--bg); }
+.form-full { grid-column:1/-1; }
+.form-result {
+  margin-top:1.5rem; padding:1.2rem 1.5rem;
+  background:rgba(0,229,255,0.05); border:1px solid var(--border);
+  border-radius:10px; display:none;
+}
+.form-result.show { display:block; animation:fadeUp .4s ease; }
+.res-summary { display:grid; grid-template-columns:repeat(3,1fr); gap:1rem; }
+@media(max-width:500px){.res-summary{grid-template-columns:1fr}}
+.sum-item { text-align:center; }
+.sum-val { font-family:'Bebas Neue'; font-size:1.8rem; color:var(--accent); }
+.sum-label { font-size:.72rem; color:var(--muted); }
+
+/* SQL terminal */
+.sql-terminal {
+  background:#000; border:1px solid rgba(0,229,255,0.2); border-radius:10px;
+  overflow:hidden;
+}
+.terminal-bar {
+  background:#111; padding:.7rem 1rem; display:flex; align-items:center; gap:.5rem;
+  border-bottom:1px solid rgba(255,255,255,0.05);
+}
+.terminal-dot { width:12px; height:12px; border-radius:50%; }
+.terminal-bar .terminal-dot:nth-child(1){background:#ff5f56}
+.terminal-bar .terminal-dot:nth-child(2){background:#ffbd2e}
+.terminal-bar .terminal-dot:nth-child(3){background:#27c93f}
+.terminal-title { font-family:'JetBrains Mono'; font-size:.72rem; color:#666; margin-left:.5rem; }
+.terminal-body { padding:1.5rem; }
+.sql-buttons { display:flex; gap:.8rem; flex-wrap:wrap; margin-bottom:1.5rem; }
+.sql-btn {
+  background:rgba(0,229,255,0.08); border:1px solid var(--border);
+  color:var(--accent); padding:.5rem 1rem; border-radius:6px;
+  font-family:'JetBrains Mono'; font-size:.72rem; cursor:pointer; transition:all .3s;
+}
+.sql-btn:hover { background:rgba(0,229,255,0.15); }
+.sql-btn.active { background:rgba(0,229,255,0.2); border-color:var(--accent); }
+.sql-code {
+  font-family:'JetBrains Mono'; font-size:.78rem; line-height:1.7;
+  color:#cdd6f4; white-space:pre-wrap;
+}
+.sql-kw { color:#89b4fa; }
+.sql-fn { color:#a6e3a1; }
+.sql-str { color:#f9e2af; }
+.sql-com { color:#585b70; }
+.sql-result-table { width:100%; border-collapse:collapse; margin-top:1.5rem; }
+.sql-result-table th {
+  font-family:'JetBrains Mono'; font-size:.68rem; color:var(--accent);
+  padding:.5rem .8rem; text-align:left; border-bottom:1px solid var(--border);
+  letter-spacing:.05em;
+}
+.sql-result-table td {
+  font-family:'JetBrains Mono'; font-size:.72rem; color:var(--muted);
+  padding:.5rem .8rem; border-bottom:1px solid rgba(255,255,255,0.03);
+}
+.sql-result-table tr:hover td { color:var(--text); background:rgba(0,229,255,0.03); }
+
+/* ── CONCLUSION ── */
+#conclusion {
+  background:linear-gradient(135deg, var(--surface) 0%, var(--bg) 100%);
+  border-top:1px solid var(--border);
+  text-align:center;
+}
+.conclusion-inner { max-width:650px; margin:0 auto; }
+.conclusion-inner p { color:var(--muted); line-height:1.8; font-size:1rem; margin-bottom:1.5rem; }
+.tech-badges { display:flex; flex-wrap:wrap; gap:.8rem; justify-content:center; margin-top:2rem; }
+.tech-badge {
+  background:rgba(0,229,255,0.07); border:1px solid var(--border);
+  color:var(--text); padding:.4rem 1rem; border-radius:20px;
+  font-family:'JetBrains Mono'; font-size:.72rem;
+  transition:all .3s;
+}
+.tech-badge:hover { background:rgba(0,229,255,0.15); border-color:var(--accent); color:var(--accent); }
+
+/* ── FOOTER ── */
+footer {
+  background:var(--bg); border-top:1px solid var(--border);
+  padding:2rem 3rem; display:flex; align-items:center; justify-content:space-between;
+  flex-wrap:wrap; gap:1rem;
+}
+.footer-info { font-size:.78rem; color:var(--muted); font-family:'JetBrains Mono'; }
+.footer-info strong { color:var(--text); }
+.footer-logo { font-family:'Bebas Neue'; font-size:1.2rem; color:var(--accent); letter-spacing:3px; }
+
+/* ── ANIMATIONS ── */
+@keyframes fadeUp { from{opacity:0;transform:translateY(24px)} to{opacity:1;transform:translateY(0)} }
+@keyframes fadeIn { from{opacity:0} to{opacity:1} }
+
+.reveal { opacity:0; transform:translateY(30px); transition:all .7s ease; }
+.reveal.visible { opacity:1; transform:translateY(0); }
+
+/* scrollbar */
+::-webkit-scrollbar { width:6px; height:6px; }
+::-webkit-scrollbar-track { background:var(--bg); }
+::-webkit-scrollbar-thumb { background:rgba(0,229,255,0.3); border-radius:3px; }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">SPMS</div>
+  <div class="nav-links">
+    <a href="#problem">Problem</a>
+    <a href="#objectives">Objectives</a>
+    <a href="#erd">ERD</a>
+    <a href="#schema">Schema</a>
+    <a href="#demo">Demo</a>
+    <a href="#reports">Reports</a>
+  </div>
+  <div class="nav-badge">Oracle SQL</div>
+</nav>
+
+<!-- HERO -->
+<section id="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-content">
+    <div class="hero-tag">Database Project Proposal — SAP 63482</div>
+    <h1>Smart<br><span>Parking</span><br>Management</h1>
+    <p class="hero-sub">A robust Oracle SQL database solution automating real-time slot availability, advance reservations, billing, and analytical reporting for urban parking facilities.</p>
+    <div class="hero-meta">
+      <div class="meta-chip">👤 <span>Sheikh Saim Abdullah Faisal</span></div>
+      <div class="meta-chip">🎓 <span>Mr. Ithisham Khan</span></div>
+      <div class="meta-chip">🏙️ <span>Rawalpindi / Islamabad</span></div>
+    </div>
+    <div class="hero-btns">
+      <a href="#demo" class="btn-primary">Explore Demo</a>
+      <a href="#erd" class="btn-outline">View ERD</a>
+    </div>
+  </div>
+
+  <!-- SVG Lot Visual -->
+  <div class="hero-visual">
+    <svg viewBox="0 0 400 320" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect x="20" y="20" width="360" height="280" rx="12" stroke="rgba(0,229,255,0.2)" stroke-width="1"/>
+      <!-- aisles -->
+      <line x1="20" y1="100" x2="380" y2="100" stroke="rgba(0,229,255,0.1)" stroke-width="1"/>
+      <line x1="20" y1="200" x2="380" y2="200" stroke="rgba(0,229,255,0.1)" stroke-width="1"/>
+      <line x1="200" y1="20" x2="200" y2="300" stroke="rgba(0,229,255,0.1)" stroke-width="1"/>
+      <!-- slots row 1 -->
+      <g id="slots1">
+        <rect x="35" y="30" width="32" height="55" rx="4" fill="rgba(127,255,107,0.12)" stroke="rgba(127,255,107,0.5)" stroke-width="1"/>
+        <rect x="75" y="30" width="32" height="55" rx="4" fill="rgba(255,68,68,0.12)" stroke="rgba(255,68,68,0.5)" stroke-width="1"/>
+        <rect x="115" y="30" width="32" height="55" rx="4" fill="rgba(127,255,107,0.12)" stroke="rgba(127,255,107,0.5)" stroke-width="1"/>
+        <rect x="155" y="30" width="32" height="55" rx="4" fill="rgba(255,215,0,0.12)" stroke="rgba(255,215,0,0.5)" stroke-width="1"/>
+        <rect x="215" y="30" width="32" height="55" rx="4" fill="rgba(255,68,68,0.12)" stroke="rgba(255,68,68,0.5)" stroke-width="1"/>
+        <rect x="255" y="30" width="32" height="55" rx="4" fill="rgba(127,255,107,0.12)" stroke="rgba(127,255,107,0.5)" stroke-width="1"/>
+        <rect x="295" y="30" width="32" height="55" rx="4" fill="rgba(127,255,107,0.12)" stroke="rgba(127,255,107,0.5)" stroke-width="1"/>
+        <rect x="335" y="30" width="32" height="55" rx="4" fill="rgba(255,68,68,0.12)" stroke="rgba(255,68,68,0.5)" stroke-width="1"/>
+      </g>
+      <!-- slots row 2 -->
+      <g>
+        <rect x="35" y="110" width="32" height="55" rx="4" fill="rgba(127,255,107,0.12)" stroke="rgba(127,255,107,0.5)" stroke-width="1"/>
+        <rect x="75" y="110" width="32" height="55" rx="4" fill="rgba(127,255,107,0.12)" stroke="rgba(127,255,107,0.5)" stroke-width="1"/>
+        <rect x="115" y="110" width="32" height="55" rx="4" fill="rgba(255,68,68,0.12)" stroke="rgba(255,68,68,0.5)" stroke-width="1"/>
+        <rect x="155" y="110" width="32" height="55" rx="4" fill="rgba(180,100,255,0.12)" stroke="rgba(180,100,255,0.5)" stroke-width="1"/>
+        <rect x="215" y="110" width="32" height="55" rx="4" fill="rgba(127,255,107,0.12)" stroke="rgba(127,255,107,0.5)" stroke-width="1"/>
+        <rect x="255" y="110" width="32" height="55" rx="4" fill="rgba(255,215,0,0.12)" stroke="rgba(255,215,0,0.5)" stroke-width="1"/>
+        <rect x="295" y="110" width="32" height="55" rx="4" fill="rgba(255,68,68,0.12)" stroke="rgba(255,68,68,0.5)" stroke-width="1"/>
+        <rect x="335" y="110" width="32" height="55" rx="4" fill="rgba(127,255,107,0.12)" stroke="rgba(127,255,107,0.5)" stroke-width="1"/>
+      </g>
+      <!-- cars in some slots -->
+      <text x="47" y="62" font-size="18" text-anchor="middle">🚗</text>
+      <text x="87" y="62" font-size="18" text-anchor="middle">🚙</text>
+      <text x="227" y="62" font-size="18" text-anchor="middle">🚗</text>
+      <text x="347" y="62" font-size="18" text-anchor="middle">🚕</text>
+      <text x="127" y="142" font-size="18" text-anchor="middle">🚗</text>
+      <text x="307" y="142" font-size="18" text-anchor="middle">🚙</text>
+      <!-- labels -->
+      <text x="200" y="240" font-size="11" fill="rgba(0,229,255,0.6)" text-anchor="middle" font-family="monospace">FLOOR 1 — BLOCK A</text>
+      <text x="200" y="258" font-size="9" fill="rgba(0,229,255,0.3)" text-anchor="middle" font-family="monospace">8/16 SLOTS OCCUPIED · 3 RESERVED</text>
+      <!-- entrance -->
+      <rect x="170" y="285" width="60" height="15" rx="4" fill="rgba(0,229,255,0.1)" stroke="rgba(0,229,255,0.4)" stroke-width="1"/>
+      <text x="200" y="296" font-size="8" fill="rgba(0,229,255,0.8)" text-anchor="middle" font-family="monospace">ENTRANCE</text>
+    </svg>
+  </div>
+</section>
+
+<!-- STATS BAR -->
+<div class="stats-bar">
+  <div class="stat-item">
+    <div class="stat-label">Total Lots</div>
+    <div class="stat-value" id="s1">0</div>
+    <div class="stat-sub">Managed facilities</div>
+    <div class="stat-bar-fill" id="b1" style="width:0%"></div>
+  </div>
+  <div class="stat-item">
+    <div class="stat-label">Total Slots</div>
+    <div class="stat-value orange" id="s2">0</div>
+    <div class="stat-sub">Across all floors</div>
+    <div class="stat-bar-fill" id="b2" style="width:0%;background:var(--accent2)"></div>
+  </div>
+  <div class="stat-item">
+    <div class="stat-label">Available Now</div>
+    <div class="stat-value green" id="s3">0</div>
+    <div class="stat-sub">Real-time status</div>
+    <div class="stat-bar-fill" id="b3" style="width:0%;background:var(--accent3)"></div>
+  </div>
+  <div class="stat-item">
+    <div class="stat-label">DB Entities</div>
+    <div class="stat-value" id="s4">0</div>
+    <div class="stat-sub">Normalized tables</div>
+    <div class="stat-bar-fill" id="b4" style="width:0%"></div>
+  </div>
+  <div class="stat-item">
+    <div class="stat-label">Normalization</div>
+    <div class="stat-value orange">BCNF</div>
+    <div class="stat-sub">3NF + BCNF achieved</div>
+    <div class="stat-bar-fill" style="width:100%;background:var(--accent2)"></div>
+  </div>
+</div>
+
+<!-- PROBLEM -->
+<section id="problem">
+  <div class="section-label">Background</div>
+  <h2>The Urban Parking <em>Crisis</em></h2>
+  <div class="problem-grid reveal">
+    <div class="problem-text">
+      <p>In modern cities like Rawalpindi and Islamabad, finding available parking spaces is a major challenge that causes ripple effects throughout the entire urban ecosystem. Traditional manual parking systems fail to keep pace with growing demands.</p>
+      <p>The absence of real-time information forces drivers to cruise streets for extended periods, compounding congestion while burning fuel. A technology-driven solution is no longer optional — it's essential.</p>
+      <div class="pain-points">
+        <div class="pain-point">
+          <div class="pain-icon">🚦</div>
+          <div><div class="pain-title">Traffic Congestion</div><div class="pain-desc">Circling vehicles hunting for spots contribute up to 30% of downtown traffic in major cities.</div></div>
+        </div>
+        <div class="pain-point">
+          <div class="pain-icon">⏱️</div>
+          <div><div class="pain-title">Time Wastage</div><div class="pain-desc">Drivers waste an average of 17 minutes per trip searching for parking in urban centers.</div></div>
+        </div>
+        <div class="pain-point">
+          <div class="pain-icon">💨</div>
+          <div><div class="pain-title">Increased Pollution</div><div class="pain-desc">Unnecessary idling and circling significantly raises carbon emissions in city centers.</div></div>
+        </div>
+        <div class="pain-point">
+          <div class="pain-icon">📋</div>
+          <div><div class="pain-title">Manual Inefficiency</div><div class="pain-desc">Paper-based systems lack real-time data, analytics, and automation capabilities.</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="city-visual">
+      <div style="font-family:'Bebas Neue';font-size:1.1rem;color:var(--muted);letter-spacing:2px;margin-bottom:1rem;">LIVE LOT STATUS</div>
+      <div class="parking-meter">
+        <div><div class="meter-label">BLUE AREA LOT</div><div style="font-size:.72rem;color:var(--muted)">Rawalpindi</div></div>
+        <div class="progress-wrap"><div class="progress-fill" style="width:87%;background:#ff4444;"></div></div>
+        <div class="meter-value red">87%</div>
+      </div>
+      <div class="parking-meter">
+        <div><div class="meter-label">F-7 MARKAZ</div><div style="font-size:.72rem;color:var(--muted)">Islamabad</div></div>
+        <div class="progress-wrap"><div class="progress-fill" style="width:62%;background:#ffbb33;"></div></div>
+        <div class="meter-value yellow">62%</div>
+      </div>
+      <div class="parking-meter">
+        <div><div class="meter-label">CENTAURUS</div><div style="font-size:.72rem;color:var(--muted)">Islamabad</div></div>
+        <div class="progress-wrap"><div class="progress-fill" style="width:34%;background:var(--accent3);"></div></div>
+        <div class="meter-value green-v">34%</div>
+      </div>
+      <div class="parking-meter">
+        <div><div class="meter-label">SADDAR</div><div style="font-size:.72rem;color:var(--muted)">Rawalpindi</div></div>
+        <div class="progress-wrap"><div class="progress-fill" style="width:95%;background:#ff4444;"></div></div>
+        <div class="meter-value red">95%</div>
+      </div>
+      <div style="margin-top:1rem;padding:1rem;background:rgba(0,229,255,0.05);border:1px solid var(--border);border-radius:8px;text-align:center;">
+        <div style="font-family:'JetBrains Mono';font-size:.7rem;color:var(--muted);">AVERAGE OCCUPANCY</div>
+        <div style="font-family:'Bebas Neue';font-size:2.5rem;color:var(--accent2);">70%</div>
+        <div style="font-size:.72rem;color:var(--muted);">Without smart management</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- OBJECTIVES -->
+<section id="objectives">
+  <div class="section-label">Project Goals</div>
+  <h2>System <em>Objectives</em></h2>
+  <div class="objectives-grid">
+    <div class="obj-card reveal">
+      <div class="obj-num">01</div>
+      <div class="obj-icon">🗄️</div>
+      <div class="obj-title">Normalized Relational Database</div>
+      <div class="obj-desc">Design a fully normalized Oracle SQL database up to BCNF, eliminating redundancy and ensuring data integrity across all parking operations.</div>
+    </div>
+    <div class="obj-card reveal">
+      <div class="obj-num">02</div>
+      <div class="obj-icon">📡</div>
+      <div class="obj-title">Real-Time Slot Tracking</div>
+      <div class="obj-desc">Enable live tracking of every parking slot's status (Available, Occupied, Reserved) using triggers and automated status updates.</div>
+    </div>
+    <div class="obj-card reveal">
+      <div class="obj-num">03</div>
+      <div class="obj-icon">🚘</div>
+      <div class="obj-title">User & Vehicle Management</div>
+      <div class="obj-desc">Support complete user registration, vehicle profiles, and time-based advance reservation capabilities.</div>
+    </div>
+    <div class="obj-card reveal">
+      <div class="obj-num">04</div>
+      <div class="obj-icon">💳</div>
+      <div class="obj-title">Automated Billing</div>
+      <div class="obj-desc">Calculate charges automatically based on parking duration and slot type (Regular, VIP, EV, Disabled) with multiple payment methods.</div>
+    </div>
+    <div class="obj-card reveal">
+      <div class="obj-num">05</div>
+      <div class="obj-icon">🔐</div>
+      <div class="obj-title">Role-Based Access</div>
+      <div class="obj-desc">Implement tiered access control for Administrators, Staff members, and Drivers with appropriate permissions per role.</div>
+    </div>
+    <div class="obj-card reveal">
+      <div class="obj-num">06</div>
+      <div class="obj-icon">📊</div>
+      <div class="obj-title">Analytical Reporting</div>
+      <div class="obj-desc">Generate revenue summaries, occupancy rates, peak-hour analysis, and frequent user reports using advanced SQL aggregation.</div>
+    </div>
+    <div class="obj-card reveal">
+      <div class="obj-num">07</div>
+      <div class="obj-icon">⚡</div>
+      <div class="obj-title">Advanced Oracle SQL</div>
+      <div class="obj-desc">Leverage PL/SQL procedures, triggers, complex joins, nested subqueries, and analytic window functions throughout the system.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ERD -->
+<section id="erd">
+  <div class="section-label">Database Architecture</div>
+  <h2>Entity-Relationship <em>Diagram</em></h2>
+  <div class="erd-container">
+    <!-- ERD SVG -->
+    <div class="erd-canvas reveal">
+      <div class="erd-svg-wrapper">
+        <svg viewBox="0 0 900 420" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
+          <defs>
+            <marker id="arr" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+              <path d="M0,0 L0,6 L8,3 z" fill="rgba(0,229,255,0.5)"/>
+            </marker>
+          </defs>
+          <!-- connection lines -->
+          <line x1="160" y1="70" x2="290" y2="110" stroke="rgba(0,229,255,0.25)" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#arr)"/>
+          <line x1="370" y1="110" x2="490" y2="70" stroke="rgba(0,229,255,0.25)" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#arr)"/>
+          <line x1="570" y1="70" x2="680" y2="110" stroke="rgba(0,229,255,0.25)" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#arr)"/>
+          <line x1="330" y1="150" x2="330" y2="240" stroke="rgba(0,229,255,0.25)" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#arr)"/>
+          <line x1="530" y1="100" x2="330" y2="240" stroke="rgba(127,255,107,0.25)" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#arr)"/>
+          <line x1="720" y1="150" x2="530" y2="240" stroke="rgba(0,229,255,0.25)" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#arr)"/>
+          <line x1="430" y1="280" x2="530" y2="240" stroke="rgba(255,107,53,0.3)" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#arr)"/>
+          <line x1="530" y1="280" x2="530" y2="350" stroke="rgba(255,107,53,0.3)" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#arr)"/>
+
+          <!-- ParkingLot -->
+          <rect x="30" y="30" width="130" height="80" rx="8" fill="rgba(0,229,255,0.05)" stroke="rgba(0,229,255,0.5)" stroke-width="1.5"/>
+          <text x="95" y="52" font-family="'JetBrains Mono',monospace" font-size="9" fill="#00e5ff" text-anchor="middle" font-weight="bold">ParkingLot</text>
+          <line x1="30" y1="60" x2="160" y2="60" stroke="rgba(0,229,255,0.3)" stroke-width="1"/>
+          <text x="40" y="74" font-family="monospace" font-size="7.5" fill="#ff6b35">🔑 LotID PK</text>
+          <text x="40" y="86" font-family="monospace" font-size="7.5" fill="#888">Name, Address</text>
+          <text x="40" y="98" font-family="monospace" font-size="7.5" fill="#888">City, TotalCapacity</text>
+
+          <!-- ParkingFloor -->
+          <rect x="270" y="90" width="120" height="70" rx="8" fill="rgba(0,229,255,0.05)" stroke="rgba(0,229,255,0.4)" stroke-width="1.5"/>
+          <text x="330" y="108" font-family="'JetBrains Mono',monospace" font-size="9" fill="#00e5ff" text-anchor="middle" font-weight="bold">ParkingFloor</text>
+          <line x1="270" y1="115" x2="390" y2="115" stroke="rgba(0,229,255,0.3)" stroke-width="1"/>
+          <text x="280" y="128" font-family="monospace" font-size="7.5" fill="#ff6b35">🔑 FloorID PK</text>
+          <text x="280" y="140" font-family="monospace" font-size="7.5" fill="#7fff6b">🔗 LotID FK</text>
+          <text x="280" y="152" font-family="monospace" font-size="7.5" fill="#888">FloorNumber</text>
+
+          <!-- ParkingSlot -->
+          <rect x="270" y="240" width="130" height="90" rx="8" fill="rgba(0,229,255,0.05)" stroke="rgba(0,229,255,0.4)" stroke-width="1.5"/>
+          <text x="335" y="258" font-family="'JetBrains Mono',monospace" font-size="9" fill="#00e5ff" text-anchor="middle" font-weight="bold">ParkingSlot</text>
+          <line x1="270" y1="265" x2="400" y2="265" stroke="rgba(0,229,255,0.3)" stroke-width="1"/>
+          <text x="280" y="278" font-family="monospace" font-size="7.5" fill="#ff6b35">🔑 SlotID PK</text>
+          <text x="280" y="290" font-family="monospace" font-size="7.5" fill="#7fff6b">🔗 FloorID FK</text>
+          <text x="280" y="302" font-family="monospace" font-size="7.5" fill="#888">SlotType, HourlyRate</text>
+          <text x="280" y="314" font-family="monospace" font-size="7.5" fill="#888">Status, SlotNumber</text>
+
+          <!-- User -->
+          <rect x="470" y="30" width="120" height="80" rx="8" fill="rgba(127,255,107,0.04)" stroke="rgba(127,255,107,0.4)" stroke-width="1.5"/>
+          <text x="530" y="52" font-family="'JetBrains Mono',monospace" font-size="9" fill="#7fff6b" text-anchor="middle" font-weight="bold">User</text>
+          <line x1="470" y1="60" x2="590" y2="60" stroke="rgba(127,255,107,0.3)" stroke-width="1"/>
+          <text x="480" y="74" font-family="monospace" font-size="7.5" fill="#ff6b35">🔑 UserID PK</text>
+          <text x="480" y="86" font-family="monospace" font-size="7.5" fill="#888">FullName, Email</text>
+          <text x="480" y="98" font-family="monospace" font-size="7.5" fill="#888">Phone, UserRole</text>
+
+          <!-- Vehicle -->
+          <rect x="660" y="90" width="120" height="70" rx="8" fill="rgba(127,255,107,0.04)" stroke="rgba(127,255,107,0.35)" stroke-width="1.5"/>
+          <text x="720" y="108" font-family="'JetBrains Mono',monospace" font-size="9" fill="#7fff6b" text-anchor="middle" font-weight="bold">Vehicle</text>
+          <line x1="660" y1="115" x2="780" y2="115" stroke="rgba(127,255,107,0.3)" stroke-width="1"/>
+          <text x="670" y="128" font-family="monospace" font-size="7.5" fill="#ff6b35">🔑 VehicleID PK</text>
+          <text x="670" y="140" font-family="monospace" font-size="7.5" fill="#7fff6b">🔗 UserID FK</text>
+          <text x="670" y="152" font-family="monospace" font-size="7.5" fill="#888">RegNum, Model</text>
+
+          <!-- Reservation -->
+          <rect x="460" y="240" width="140" height="90" rx="8" fill="rgba(255,215,0,0.04)" stroke="rgba(255,215,0,0.4)" stroke-width="1.5"/>
+          <text x="530" y="258" font-family="'JetBrains Mono',monospace" font-size="9" fill="#ffd700" text-anchor="middle" font-weight="bold">Reservation</text>
+          <line x1="460" y1="265" x2="600" y2="265" stroke="rgba(255,215,0,0.3)" stroke-width="1"/>
+          <text x="470" y="278" font-family="monospace" font-size="7.5" fill="#ff6b35">🔑 ReservationID PK</text>
+          <text x="470" y="290" font-family="monospace" font-size="7.5" fill="#7fff6b">🔗 UserID, SlotID FK</text>
+          <text x="470" y="302" font-family="monospace" font-size="7.5" fill="#888">StartTime, EndTime</text>
+          <text x="470" y="314" font-family="monospace" font-size="7.5" fill="#888">Status</text>
+
+          <!-- Transaction -->
+          <rect x="460" y="355" width="140" height="55" rx="8" fill="rgba(255,107,53,0.05)" stroke="rgba(255,107,53,0.4)" stroke-width="1.5"/>
+          <text x="530" y="373" font-family="'JetBrains Mono',monospace" font-size="9" fill="#ff6b35" text-anchor="middle" font-weight="bold">ParkingTransaction</text>
+          <line x1="460" y1="380" x2="600" y2="380" stroke="rgba(255,107,53,0.3)" stroke-width="1"/>
+          <text x="470" y="392" font-family="monospace" font-size="7.5" fill="#ff6b35">🔑 TransactionID PK</text>
+          <text x="470" y="404" font-family="monospace" font-size="7.5" fill="#7fff6b">🔗 ReservationID FK</text>
+
+          <!-- 1:N labels -->
+          <text x="195" y="90" font-family="monospace" font-size="8" fill="rgba(0,229,255,0.5)">1:N</text>
+          <text x="415" y="90" font-family="monospace" font-size="8" fill="rgba(0,229,255,0.5)">1:N</text>
+          <text x="345" y="200" font-family="monospace" font-size="8" fill="rgba(0,229,255,0.5)">1:N</text>
+          <text x="610" y="130" font-family="monospace" font-size="8" fill="rgba(127,255,107,0.5)">1:N</text>
+          <text x="550" y="350" font-family="monospace" font-size="8" fill="rgba(255,107,53,0.5)">1:1</text>
+        </svg>
+      </div>
+    </div>
+
+    <!-- Entity Cards -->
+    <div class="entity-cards-grid reveal">
+      <div class="entity-card">
+        <div class="entity-name">ParkingLot</div>
+        <div class="entity-attrs">
+          <div class="attr pk"><span class="attr-badge badge-pk">PK</span>LotID</div>
+          <div class="attr">Name, Address, City</div>
+          <div class="attr">TotalCapacity</div>
+        </div>
+      </div>
+      <div class="entity-card">
+        <div class="entity-name">ParkingFloor</div>
+        <div class="entity-attrs">
+          <div class="attr pk"><span class="attr-badge badge-pk">PK</span>FloorID</div>
+          <div class="attr fk"><span class="attr-badge badge-fk">FK</span>LotID</div>
+          <div class="attr">FloorNumber</div>
+        </div>
+      </div>
+      <div class="entity-card">
+        <div class="entity-name">ParkingSlot</div>
+        <div class="entity-attrs">
+          <div class="attr pk"><span class="attr-badge badge-pk">PK</span>SlotID</div>
+          <div class="attr fk"><span class="attr-badge badge-fk">FK</span>FloorID</div>
+          <div class="attr">SlotNumber, SlotType</div>
+          <div class="attr">HourlyRate, Status</div>
+        </div>
+      </div>
+      <div class="entity-card">
+        <div class="entity-name">User</div>
+        <div class="entity-attrs">
+          <div class="attr pk"><span class="attr-badge badge-pk">PK</span>UserID</div>
+          <div class="attr">FullName, Email, Phone</div>
+          <div class="attr">UserRole</div>
+        </div>
+      </div>
+      <div class="entity-card">
+        <div class="entity-name">Vehicle</div>
+        <div class="entity-attrs">
+          <div class="attr pk"><span class="attr-badge badge-pk">PK</span>VehicleID</div>
+          <div class="attr fk"><span class="attr-badge badge-fk">FK</span>UserID</div>
+          <div class="attr">RegistrationNumber</div>
+          <div class="attr">Model, Type</div>
+        </div>
+      </div>
+      <div class="entity-card">
+        <div class="entity-name">Reservation</div>
+        <div class="entity-attrs">
+          <div class="attr pk"><span class="attr-badge badge-pk">PK</span>ReservationID</div>
+          <div class="attr fk"><span class="attr-badge badge-fk">FK</span>UserID, SlotID</div>
+          <div class="attr">StartTime, EndTime</div>
+          <div class="attr">Status</div>
+        </div>
+      </div>
+      <div class="entity-card">
+        <div class="entity-name">ParkingTransaction</div>
+        <div class="entity-attrs">
+          <div class="attr pk"><span class="attr-badge badge-pk">PK</span>TransactionID</div>
+          <div class="attr fk"><span class="attr-badge badge-fk">FK</span>ReservationID</div>
+          <div class="attr">EntryTime, ExitTime</div>
+          <div class="attr">Amount</div>
+        </div>
+      </div>
+      <div class="entity-card">
+        <div class="entity-name">Payment</div>
+        <div class="entity-attrs">
+          <div class="attr pk"><span class="attr-badge badge-pk">PK</span>PaymentID</div>
+          <div class="attr fk"><span class="attr-badge badge-fk">FK</span>TransactionID</div>
+          <div class="attr">AmountPaid, PaymentDate</div>
+          <div class="attr">PaymentMethod</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Relationships -->
+    <div style="margin-top:2rem;">
+      <div style="font-family:'JetBrains Mono';font-size:.72rem;color:var(--accent);letter-spacing:.2em;text-transform:uppercase;margin-bottom:1rem;">Key Relationships</div>
+      <div class="rel-grid reveal">
+        <div class="rel-item"><span class="rel-from">ParkingLot</span><span class="rel-arrow">→</span><span class="rel-type">1:N</span><span class="rel-arrow">→</span><span class="rel-to">ParkingFloor</span></div>
+        <div class="rel-item"><span class="rel-from">ParkingFloor</span><span class="rel-arrow">→</span><span class="rel-type">1:N</span><span class="rel-arrow">→</span><span class="rel-to">ParkingSlot</span></div>
+        <div class="rel-item"><span class="rel-from">User</span><span class="rel-arrow">→</span><span class="rel-type">1:N</span><span class="rel-arrow">→</span><span class="rel-to">Vehicle</span></div>
+        <div class="rel-item"><span class="rel-from">User</span><span class="rel-arrow">→</span><span class="rel-type">1:N</span><span class="rel-arrow">→</span><span class="rel-to">Reservation</span></div>
+        <div class="rel-item"><span class="rel-from">Reservation</span><span class="rel-arrow">→</span><span class="rel-type">1:1</span><span class="rel-arrow">→</span><span class="rel-to">ParkingSlot</span></div>
+        <div class="rel-item"><span class="rel-from">Reservation</span><span class="rel-arrow">→</span><span class="rel-type">generates</span><span class="rel-arrow">→</span><span class="rel-to">ParkingTransaction</span></div>
+        <div class="rel-item"><span class="rel-from">ParkingTransaction</span><span class="rel-arrow">→</span><span class="rel-type">1:1</span><span class="rel-arrow">→</span><span class="rel-to">Payment</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SCHEMA & NORMALIZATION -->
+<section id="schema">
+  <div class="section-label">Database Design</div>
+  <h2>Schema & <em>Normalization</em></h2>
+  <div class="schema-layout reveal">
+    <div>
+      <div style="font-family:'JetBrains Mono';font-size:.72rem;color:var(--accent);letter-spacing:.15em;text-transform:uppercase;margin-bottom:1.2rem;">Normalization Steps</div>
+      <div class="norm-steps">
+        <div class="norm-step">
+          <div class="norm-badge">1NF</div>
+          <div><div class="norm-title">First Normal Form</div><div class="norm-desc">Atomic attributes with no repeating groups. Each column holds a single indivisible value per row.</div></div>
+        </div>
+        <div class="norm-step">
+          <div class="norm-badge">2NF</div>
+          <div><div class="norm-title">Second Normal Form</div><div class="norm-desc">No partial dependencies. Every non-key attribute fully depends on the entire primary key.</div></div>
+        </div>
+        <div class="norm-step">
+          <div class="norm-badge">3NF</div>
+          <div><div class="norm-title">Third Normal Form</div><div class="norm-desc">No transitive dependencies. Non-key attributes depend only on the primary key, not on each other.</div></div>
+        </div>
+        <div class="norm-step">
+          <div class="norm-badge" style="background:var(--accent2);">BCNF</div>
+          <div><div class="norm-title">Boyce-Codd Normal Form</div><div class="norm-desc">Every determinant is a candidate key. Strongest standard normalization, eliminating all anomalies.</div></div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div style="font-family:'JetBrains Mono';font-size:.72rem;color:var(--accent);letter-spacing:.15em;text-transform:uppercase;margin-bottom:1.2rem;">Database Constraints</div>
+      <div class="constraints-list">
+        <div class="constraint-item"><div class="constraint-type">PRIMARY KEY</div><div class="constraint-desc">Unique identifier for every entity row across all 8 tables</div></div>
+        <div class="constraint-item"><div class="constraint-type">FOREIGN KEY</div><div class="constraint-desc">Enforces referential integrity between parent-child tables</div></div>
+        <div class="constraint-item"><div class="constraint-type">UNIQUE</div><div class="constraint-desc">Email, RegistrationNumber, SlotNumber per floor guaranteed unique</div></div>
+        <div class="constraint-item"><div class="constraint-type">NOT NULL</div><div class="constraint-desc">Critical fields like EntryTime, Amount, and Status cannot be empty</div></div>
+        <div class="constraint-item"><div class="constraint-type">CHECK</div><div class="constraint-desc">SlotType IN ('Regular','VIP','EV','Disabled') and Status IN ('Available','Occupied','Reserved')</div></div>
+        <div class="constraint-item"><div class="constraint-type">TRIGGER</div><div class="constraint-desc">Auto-updates ParkingSlot.Status on reservation create/cancel and transaction entry/exit</div></div>
+        <div class="constraint-item"><div class="constraint-type">PL/SQL</div><div class="constraint-desc">Stored procedures for billing calculation, report generation, and batch operations</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SLOT TYPES -->
+<section id="slots">
+  <div class="section-label">Parking Categories</div>
+  <h2>Slot <em>Types</em></h2>
+  <div class="slot-types reveal">
+    <div class="slot-card regular">
+      <div class="slot-icon">🚗</div>
+      <div class="slot-name">Regular</div>
+      <div class="slot-rate">PKR 50 / hour</div>
+      <div class="slot-desc">Standard parking spots for everyday passenger vehicles. The most common slot type available across all floors.</div>
+    </div>
+    <div class="slot-card vip">
+      <div class="slot-icon">⭐</div>
+      <div class="slot-name">VIP</div>
+      <div class="slot-rate">PKR 150 / hour</div>
+      <div class="slot-desc">Premium covered spots near entrances, reserved for priority customers. Wider spacing and premium location.</div>
+    </div>
+    <div class="slot-card ev">
+      <div class="slot-icon">⚡</div>
+      <div class="slot-name">Electric Vehicle</div>
+      <div class="slot-rate">PKR 80 / hour</div>
+      <div class="slot-desc">Equipped with EV charging stations. Supports Type-1 and Type-2 connectors for all major electric vehicle models.</div>
+    </div>
+    <div class="slot-card disabled">
+      <div class="slot-icon">♿</div>
+      <div class="slot-name">Disabled</div>
+      <div class="slot-rate">PKR 20 / hour</div>
+      <div class="slot-desc">Accessibility-compliant spots with extra width and ramped access, located closest to building entrances.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ROLES -->
+<section id="roles" style="background:var(--surface)">
+  <div class="section-label">Access Control</div>
+  <h2>Role-Based <em>Access</em></h2>
+  <div class="roles-grid reveal">
+    <div class="role-card admin">
+      <div class="role-label">🔴 Admin</div>
+      <div class="role-perms">
+        <div class="perm">Manage all parking lots, floors & slots</div>
+        <div class="perm">Add / remove staff members</div>
+        <div class="perm">View all analytics and revenue reports</div>
+        <div class="perm">Configure hourly rates per slot type</div>
+        <div class="perm">Access full transaction history</div>
+        <div class="perm">Manage system-wide settings</div>
+      </div>
+    </div>
+    <div class="role-card staff">
+      <div class="role-label">🔵 Staff</div>
+      <div class="role-perms">
+        <div class="perm">Log vehicle entry and exit times</div>
+        <div class="perm">Update slot availability in real-time</div>
+        <div class="perm">View current lot occupancy</div>
+        <div class="perm">Process walk-in reservations</div>
+        <div class="perm">Assist with payment processing</div>
+        <div class="perm">Generate shift reports</div>
+      </div>
+    </div>
+    <div class="role-card driver">
+      <div class="role-label">🟢 Driver</div>
+      <div class="role-perms">
+        <div class="perm">Register account and add vehicles</div>
+        <div class="perm">Check real-time slot availability</div>
+        <div class="perm">Make advance reservations</div>
+        <div class="perm">View personal reservation history</div>
+        <div class="perm">Make and track payments</div>
+        <div class="perm">Receive booking confirmations</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- REPORTS -->
+<section id="reports">
+  <div class="section-label">Analytics & Insights</div>
+  <h2>Expected <em>Reports</em></h2>
+  <div class="reports-grid reveal">
+    <div class="report-card">
+      <div class="report-icon">📍</div>
+      <div class="report-title">Real-Time Slot Availability</div>
+      <div class="report-desc">Live count of available, occupied, and reserved slots per lot and floor, updated by triggers.</div>
+      <span class="report-tag">Live Query</span>
+    </div>
+    <div class="report-card">
+      <div class="report-icon">📅</div>
+      <div class="report-title">Reservation History</div>
+      <div class="report-desc">Complete log of all reservations with user details, slot info, times, and current status.</div>
+      <span class="report-tag">JOIN Query</span>
+    </div>
+    <div class="report-card">
+      <div class="report-icon">💰</div>
+      <div class="report-title">Daily / Weekly Revenue</div>
+      <div class="report-desc">Aggregated revenue summaries grouped by day, week, lot, and payment method.</div>
+      <span class="report-tag">Aggregation</span>
+    </div>
+    <div class="report-card">
+      <div class="report-icon">📈</div>
+      <div class="report-title">Occupancy Rate Analysis</div>
+      <div class="report-desc">Percentage occupancy per lot over time, identifying underutilized and overloaded facilities.</div>
+      <span class="report-tag">Analytic Fn</span>
+    </div>
+    <div class="report-card">
+      <div class="report-icon">⏰</div>
+      <div class="report-title">Peak Hour Analysis</div>
+      <div class="report-desc">Identifies the busiest hours and days using window functions on transaction timestamps.</div>
+      <span class="report-tag">Window Fn</span>
+    </div>
+    <div class="report-card">
+      <div class="report-icon">👤</div>
+      <div class="report-title">Frequent User Analysis</div>
+      <div class="report-desc">Ranks drivers by visit frequency, total spend, and preferred slot types for loyalty programs.</div>
+      <span class="report-tag">Subquery</span>
+    </div>
+  </div>
+</section>
+
+<!-- DEMO -->
+<section id="demo" style="background:var(--surface)">
+  <div class="section-label">Interactive Demo</div>
+  <h2>Explore the <em>System</em></h2>
+  <div class="demo-wrapper reveal">
+    <div class="demo-tabs">
+      <button class="demo-tab active" onclick="switchTab('lot')">🅿️ Lot View</button>
+      <button class="demo-tab" onclick="switchTab('reserve')">📋 Reservation</button>
+      <button class="demo-tab" onclick="switchTab('sql')">💻 SQL Queries</button>
+    </div>
+
+    <!-- Lot View -->
+    <div class="demo-content active" id="tab-lot">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;flex-wrap:wrap;gap:1rem;">
+        <div>
+          <div style="font-family:'Bebas Neue';font-size:1.6rem;letter-spacing:1px;">Blue Area Lot — Rawalpindi</div>
+          <div style="font-size:.78rem;color:var(--muted);font-family:'JetBrains Mono'">3 Floors · 48 Total Slots</div>
+        </div>
+        <div style="display:flex;gap:1rem;flex-wrap:wrap;">
+          <div style="text-align:center;background:var(--bg);padding:.8rem 1.2rem;border-radius:8px;border:1px solid var(--border);">
+            <div style="font-family:'Bebas Neue';font-size:1.8rem;color:var(--accent3);" id="avail-count">22</div>
+            <div style="font-size:.68rem;color:var(--muted);font-family:'JetBrains Mono'">AVAILABLE</div>
+          </div>
+          <div style="text-align:center;background:var(--bg);padding:.8rem 1.2rem;border-radius:8px;border:1px solid var(--border);">
+            <div style="font-family:'Bebas Neue';font-size:1.8rem;color:#ff4444;">20</div>
+            <div style="font-size:.68rem;color:var(--muted);font-family:'JetBrains Mono'">OCCUPIED</div>
+          </div>
+          <div style="text-align:center;background:var(--bg);padding:.8rem 1.2rem;border-radius:8px;border:1px solid var(--border);">
+            <div style="font-family:'Bebas Neue';font-size:1.8rem;color:#ffd700;">6</div>
+            <div style="font-size:.68rem;color:var(--muted);font-family:'JetBrains Mono'">RESERVED</div>
+          </div>
+        </div>
+      </div>
+      <div class="lot-grid-wrap" id="lot-grid"></div>
+      <div class="legend">
+        <div class="legend-item"><div class="legend-dot" style="background:rgba(127,255,107,0.3);border:1px solid var(--accent3)"></div>Available</div>
+        <div class="legend-item"><div class="legend-dot" style="background:rgba(255,68,68,0.3);border:1px solid #ff4444"></div>Occupied</div>
+        <div class="legend-item"><div class="legend-dot" style="background:rgba(255,215,0,0.2);border:1px solid #ffd700"></div>Reserved</div>
+      </div>
+      <div style="margin-top:1rem;font-size:.75rem;color:var(--muted);font-family:'JetBrains Mono'">💡 Click any available slot to reserve it</div>
+    </div>
+
+    <!-- Reservation -->
+    <div class="demo-content" id="tab-reserve">
+      <div style="font-family:'Bebas Neue';font-size:1.4rem;letter-spacing:1px;margin-bottom:1.5rem;">New Reservation</div>
+      <div class="res-form">
+        <div class="form-group">
+          <label>Full Name</label>
+          <input type="text" id="f-name" placeholder="Sheikh Saim Abdullah">
+        </div>
+        <div class="form-group">
+          <label>Vehicle Registration</label>
+          <input type="text" id="f-reg" placeholder="RWP-1234">
+        </div>
+        <div class="form-group">
+          <label>Parking Lot</label>
+          <select id="f-lot">
+            <option>Blue Area Lot — Rawalpindi</option>
+            <option>F-7 Markaz — Islamabad</option>
+            <option>Centaurus Mall — Islamabad</option>
+            <option>Saddar — Rawalpindi</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Slot Type</label>
+          <select id="f-type">
+            <option value="50">Regular — PKR 50/hr</option>
+            <option value="150">VIP — PKR 150/hr</option>
+            <option value="80">Electric Vehicle — PKR 80/hr</option>
+            <option value="20">Disabled — PKR 20/hr</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Start Time</label>
+          <input type="datetime-local" id="f-start">
+        </div>
+        <div class="form-group">
+          <label>End Time</label>
+          <input type="datetime-local" id="f-end">
+        </div>
+        <div class="form-group form-full">
+          <button class="btn-primary" onclick="calcReservation()" style="width:fit-content;">Calculate & Reserve</button>
+        </div>
+      </div>
+      <div class="form-result" id="res-result">
+        <div style="font-family:'JetBrains Mono';font-size:.72rem;color:var(--accent);margin-bottom:1rem;letter-spacing:.1em;">✓ RESERVATION CONFIRMED</div>
+        <div class="res-summary">
+          <div class="sum-item"><div class="sum-val" id="r-hours">-</div><div class="sum-label">Hours</div></div>
+          <div class="sum-item"><div class="sum-val" id="r-amount">-</div><div class="sum-label">PKR Total</div></div>
+          <div class="sum-item"><div class="sum-val" id="r-slot">-</div><div class="sum-label">Slot Assigned</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SQL -->
+    <div class="demo-content" id="tab-sql">
+      <div class="sql-terminal">
+        <div class="terminal-bar">
+          <div class="terminal-dot"></div><div class="terminal-dot"></div><div class="terminal-dot"></div>
+          <span class="terminal-title">Oracle SQL — Smart Parking DB</span>
+        </div>
+        <div class="terminal-body">
+          <div class="sql-buttons">
+            <button class="sql-btn active" onclick="showQuery(0,this)">Available Slots</button>
+            <button class="sql-btn" onclick="showQuery(1,this)">Revenue Report</button>
+            <button class="sql-btn" onclick="showQuery(2,this)">Peak Hours</button>
+            <button class="sql-btn" onclick="showQuery(3,this)">Trigger Code</button>
+            <button class="sql-btn" onclick="showQuery(4,this)">Top Users</button>
+          </div>
+          <div id="sql-display"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CONCLUSION -->
+<section id="conclusion">
+  <div class="section-label">Summary</div>
+  <h2>Conclusion & <em>Impact</em></h2>
+  <div class="conclusion-inner reveal">
+    <p>The Smart Parking Management System is a practical, real-world solution to the growing urban parking challenge in cities like Rawalpindi and Islamabad. By leveraging the full power of Oracle SQL and PL/SQL, this project demonstrates mastery of complex database design principles.</p>
+    <p>From its carefully normalized schema (achieving BCNF), to its sophisticated trigger-based automation, role-based access control, and advanced analytical queries — this system goes well beyond basic CRUD operations and establishes a solid foundation for enterprise-grade database development.</p>
+    <div class="tech-badges">
+      <span class="tech-badge">Oracle SQL</span>
+      <span class="tech-badge">PL/SQL</span>
+      <span class="tech-badge">Triggers</span>
+      <span class="tech-badge">3NF / BCNF</span>
+      <span class="tech-badge">Window Functions</span>
+      <span class="tech-badge">Nested Subqueries</span>
+      <span class="tech-badge">ER Modeling</span>
+      <span class="tech-badge">Role-Based Access</span>
+      <span class="tech-badge">Automated Billing</span>
+      <span class="tech-badge">Real-Time Tracking</span>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div>
+    <div class="footer-logo">SPMS</div>
+    <div class="footer-info" style="margin-top:.4rem">Smart Parking Management System</div>
+  </div>
+  <div class="footer-info" style="text-align:right">
+    <strong>Sheikh Saim Abdullah Faisal</strong><br>
+    SAP: 63482 · Instructor: Mr. Ithisham Khan
+  </div>
+</footer>
+
+<script>
+// ── COUNTER ANIMATION ──
+function animateCounter(el, target, suffix='') {
+  let start=0, dur=1800;
+  let step = target/dur * 16;
+  let timer = setInterval(()=>{
+    start = Math.min(start+step, target);
+    el.textContent = Math.floor(start) + suffix;
+    if(start>=target) clearInterval(timer);
+  },16);
+}
+setTimeout(()=>{
+  animateCounter(document.getElementById('s1'), 4);
+  animateCounter(document.getElementById('s2'), 512);
+  animateCounter(document.getElementById('s3'), 187);
+  animateCounter(document.getElementById('s4'), 8);
+  document.getElementById('b1').style.width='80%';
+  document.getElementById('b2').style.width='70%';
+  document.getElementById('b3').style.width='55%';
+  document.getElementById('b4').style.width='100%';
+},400);
+
+// ── SCROLL REVEAL ──
+const obs = new IntersectionObserver(entries=>{
+  entries.forEach(e=>{ if(e.isIntersecting) e.target.classList.add('visible'); });
+},{threshold:.1});
+document.querySelectorAll('.reveal').forEach(el=>obs.observe(el));
+
+// ── TAB SWITCHING ──
+function switchTab(id){
+  document.querySelectorAll('.demo-tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.demo-content').forEach(c=>c.classList.remove('active'));
+  document.getElementById('tab-'+id).classList.add('active');
+  event.target.classList.add('active');
+}
+
+// ── LOT GRID ──
+function buildLotGrid(){
+  const grid = document.getElementById('lot-grid');
+  const floors = [
+    {name:'Floor 1 — Ground', slots:16, pattern:[0,1,0,0,1,1,0,2,0,1,0,0,1,0,0,1]},
+    {name:'Floor 2 — Level 1', slots:16, pattern:[1,0,0,1,0,0,2,0,1,0,1,0,0,1,0,0]},
+    {name:'Floor 3 — Level 2', slots:16, pattern:[0,0,1,0,2,0,0,1,0,0,1,0,0,2,0,1]}
+  ];
+  const types=['available','occupied','reserved'];
+  let html='';
+  floors.forEach((f,fi)=>{
+    html+=`<div class="floor-section">
+      <div class="floor-label">${f.name}</div>
+      <div class="slot-row">`;
+    f.pattern.forEach((t,i)=>{
+      const num=(fi*16+i+1).toString().padStart(2,'0');
+      const typeClass=types[t];
+      html+=`<div class="slot-box ${typeClass}" onclick="clickSlot(this,'${typeClass}','${num}')" title="Slot ${num}">${num}</div>`;
+    });
+    html+='</div></div>';
+  });
+  grid.innerHTML=html;
+}
+buildLotGrid();
+
+function clickSlot(el,type,num){
+  if(type!=='available') return;
+  if(confirm(`Reserve slot ${num}?`)){
+    el.className='slot-box reserved';
+    const a=document.getElementById('avail-count');
+    a.textContent=parseInt(a.textContent)-1;
+  }
+}
+
+// ── RESERVATION CALC ──
+document.getElementById('f-start').value = new Date().toISOString().slice(0,16);
+document.getElementById('f-end').value = new Date(Date.now()+3*3600000).toISOString().slice(0,16);
+
+function calcReservation(){
+  const start=new Date(document.getElementById('f-start').value);
+  const end=new Date(document.getElementById('f-end').value);
+  const rate=parseInt(document.getElementById('f-type').value);
+  if(!start||!end||end<=start){alert('Please select valid times');return;}
+  const hours=Math.ceil((end-start)/3600000);
+  const amount=hours*rate;
+  const slot='A'+(Math.floor(Math.random()*48)+1).toString().padStart(2,'0');
+  document.getElementById('r-hours').textContent=hours;
+  document.getElementById('r-amount').textContent=amount.toLocaleString();
+  document.getElementById('r-slot').textContent=slot;
+  const res=document.getElementById('res-result');
+  res.classList.add('show');
+}
+
+// ── SQL QUERIES ──
+const queries=[
+  {
+    code:`<span class="sql-com">-- Real-time available slots per lot</span>
+<span class="sql-kw">SELECT</span> pl.Name <span class="sql-kw">AS</span> Lot,
+       pf.FloorNumber,
+       <span class="sql-fn">COUNT</span>(ps.SlotID) <span class="sql-kw">AS</span> AvailableSlots,
+       ps.SlotType
+<span class="sql-kw">FROM</span>   ParkingLot pl
+<span class="sql-kw">JOIN</span>   ParkingFloor pf <span class="sql-kw">ON</span> pl.LotID = pf.LotID
+<span class="sql-kw">JOIN</span>   ParkingSlot ps  <span class="sql-kw">ON</span> pf.FloorID = ps.FloorID
+<span class="sql-kw">WHERE</span>  ps.Status = <span class="sql-str">'Available'</span>
+<span class="sql-kw">GROUP BY</span> pl.Name, pf.FloorNumber, ps.SlotType
+<span class="sql-kw">ORDER BY</span> pl.Name, pf.FloorNumber;`,
+    rows:[
+      ['Blue Area Lot','1','Regular','8'],
+      ['Blue Area Lot','2','VIP','3'],
+      ['Blue Area Lot','3','EV','2'],
+      ['F-7 Markaz','1','Regular','12'],
+      ['Centaurus','1','Disabled','4'],
+    ],
+    headers:['Lot','Floor','SlotType','Available']
+  },
+  {
+    code:`<span class="sql-com">-- Weekly revenue by payment method</span>
+<span class="sql-kw">SELECT</span> <span class="sql-fn">TO_CHAR</span>(p.PaymentDate, <span class="sql-str">'YYYY-IW'</span>) <span class="sql-kw">AS</span> Week,
+       p.PaymentMethod,
+       <span class="sql-fn">SUM</span>(p.AmountPaid)  <span class="sql-kw">AS</span> TotalRevenue,
+       <span class="sql-fn">COUNT</span>(p.PaymentID) <span class="sql-kw">AS</span> Transactions
+<span class="sql-kw">FROM</span>   Payment p
+<span class="sql-kw">JOIN</span>   ParkingTransaction pt <span class="sql-kw">ON</span> p.TransactionID = pt.TransactionID
+<span class="sql-kw">WHERE</span>  p.PaymentDate >= <span class="sql-fn">TRUNC</span>(<span class="sql-fn">SYSDATE</span>, <span class="sql-str">'IW'</span>)
+<span class="sql-kw">GROUP BY ROLLUP</span>(<span class="sql-fn">TO_CHAR</span>(p.PaymentDate,<span class="sql-str">'YYYY-IW'</span>), p.PaymentMethod)
+<span class="sql-kw">ORDER BY</span> Week, PaymentMethod;`,
+    rows:[
+      ['2025-18','Cash','45,200','38'],
+      ['2025-18','Card','72,800','61'],
+      ['2025-18','JazzCash','28,500','24'],
+      ['2025-18','EasyPaisa','19,100','16'],
+      ['2025-18','TOTAL','165,600','139'],
+    ],
+    headers:['Week','Method','Revenue (PKR)','Transactions']
+  },
+  {
+    code:`<span class="sql-com">-- Peak hour analysis using window functions</span>
+<span class="sql-kw">SELECT</span> HourOfDay,
+       TotalEntries,
+       <span class="sql-fn">ROUND</span>(TotalEntries * 100.0 / <span class="sql-fn">SUM</span>(TotalEntries)
+         <span class="sql-kw">OVER</span>(), 1) <span class="sql-kw">AS</span> PctShare,
+       <span class="sql-fn">RANK</span>() <span class="sql-kw">OVER</span> (<span class="sql-kw">ORDER BY</span> TotalEntries <span class="sql-kw">DESC</span>) <span class="sql-kw">AS</span> Rank
+<span class="sql-kw">FROM</span> (
+  <span class="sql-kw">SELECT</span> <span class="sql-fn">EXTRACT</span>(HOUR <span class="sql-kw">FROM</span> EntryTime) <span class="sql-kw">AS</span> HourOfDay,
+         <span class="sql-fn">COUNT</span>(*) <span class="sql-kw">AS</span> TotalEntries
+  <span class="sql-kw">FROM</span>   ParkingTransaction
+  <span class="sql-kw">GROUP BY</span> <span class="sql-fn">EXTRACT</span>(HOUR <span class="sql-kw">FROM</span> EntryTime)
+)
+<span class="sql-kw">ORDER BY</span> Rank;`,
+    rows:[
+      ['9 AM','142','18.2%','1'],
+      ['10 AM','128','16.4%','2'],
+      ['5 PM','119','15.2%','3'],
+      ['8 AM','98','12.5%','4'],
+      ['6 PM','87','11.1%','5'],
+    ],
+    headers:['Hour','Entries','% Share','Rank']
+  },
+  {
+    code:`<span class="sql-com">-- Trigger: auto-update slot status on reservation</span>
+<span class="sql-kw">CREATE OR REPLACE TRIGGER</span> trg_slot_on_reserve
+  <span class="sql-kw">AFTER INSERT ON</span> Reservation
+  <span class="sql-kw">FOR EACH ROW</span>
+<span class="sql-kw">BEGIN</span>
+  <span class="sql-kw">IF</span> :NEW.Status = <span class="sql-str">'Confirmed'</span> <span class="sql-kw">THEN</span>
+    <span class="sql-kw">UPDATE</span> ParkingSlot
+    <span class="sql-kw">SET</span>    Status = <span class="sql-str">'Reserved'</span>
+    <span class="sql-kw">WHERE</span>  SlotID = :NEW.SlotID;
+  <span class="sql-kw">END IF</span>;
+<span class="sql-kw">END</span>;
+/
+
+<span class="sql-com">-- Trigger: release slot when reservation cancelled</span>
+<span class="sql-kw">CREATE OR REPLACE TRIGGER</span> trg_slot_on_cancel
+  <span class="sql-kw">AFTER UPDATE OF</span> Status <span class="sql-kw">ON</span> Reservation
+  <span class="sql-kw">FOR EACH ROW</span>
+  <span class="sql-kw">WHEN</span> (NEW.Status = <span class="sql-str">'Cancelled'</span>)
+<span class="sql-kw">BEGIN</span>
+  <span class="sql-kw">UPDATE</span> ParkingSlot
+  <span class="sql-kw">SET</span>    Status = <span class="sql-str">'Available'</span>
+  <span class="sql-kw">WHERE</span>  SlotID = :OLD.SlotID;
+<span class="sql-kw">END</span>;
+/`,
+    rows:null, headers:null
+  },
+  {
+    code:`<span class="sql-com">-- Top 5 most frequent users with total spend</span>
+<span class="sql-kw">SELECT</span> u.FullName,
+       u.Email,
+       <span class="sql-fn">COUNT</span>(r.ReservationID)   <span class="sql-kw">AS</span> TotalBookings,
+       <span class="sql-fn">SUM</span>(p.AmountPaid)       <span class="sql-kw">AS</span> TotalSpent,
+       <span class="sql-fn">ROUND</span>(<span class="sql-fn">AVG</span>(pt.Amount),0) <span class="sql-kw">AS</span> AvgPerVisit
+<span class="sql-kw">FROM</span>   Users u
+<span class="sql-kw">JOIN</span>   Reservation r        <span class="sql-kw">ON</span> u.UserID = r.UserID
+<span class="sql-kw">JOIN</span>   ParkingTransaction pt <span class="sql-kw">ON</span> r.ReservationID = pt.ReservationID
+<span class="sql-kw">JOIN</span>   Payment p             <span class="sql-kw">ON</span> pt.TransactionID = p.TransactionID
+<span class="sql-kw">GROUP BY</span> u.UserID, u.FullName, u.Email
+<span class="sql-kw">ORDER BY</span> TotalBookings <span class="sql-kw">DESC</span>
+<span class="sql-fn">FETCH FIRST</span> 5 <span class="sql-kw">ROWS ONLY</span>;`,
+    rows:[
+      ['Ahmed Raza','ahmed@x.com','47','23,500','500'],
+      ['Sara Malik','sara@x.com','38','28,500','750'],
+      ['Bilal Khan','bilal@x.com','31','15,500','500'],
+      ['Hina Baig','hina@x.com','29','43,500','1500'],
+      ['Usman Ali','usman@x.com','24','12,000','500'],
+    ],
+    headers:['Name','Email','Bookings','Spent (PKR)','Avg/Visit']
+  }
+];
+
+function showQuery(i, btn){
+  document.querySelectorAll('.sql-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  const q=queries[i];
+  let html=`<div class="sql-code">${q.code}</div>`;
+  if(q.rows){
+    html+=`<table class="sql-result-table"><thead><tr>${q.headers.map(h=>`<th>${h}</th>`).join('')}</tr></thead><tbody>`;
+    q.rows.forEach(r=>{ html+=`<tr>${r.map(c=>`<td>${c}</td>`).join('')}</tr>`; });
+    html+=`</tbody></table>`;
+    html+=`<div style="font-family:'JetBrains Mono';font-size:.68rem;color:var(--muted);margin-top:.8rem;">${q.rows.length} rows returned.</div>`;
+  }
+  document.getElementById('sql-display').innerHTML=html;
+}
+showQuery(0, document.querySelector('.sql-btn'));
+</script>
+</body>
+</html>
